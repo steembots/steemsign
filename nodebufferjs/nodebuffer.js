@@ -5,10 +5,10 @@
 
 'use strict';
 
-var Buffer = {};
-Buffer.prototype = {};
+//var Buffer = {};
+//Buffer.prototype = {};
 
-var SlowBuffer = {};
+//var SlowBuffer = {};
 var INSPECT_MAX_BYTES = 50;
 
 Buffer.TYPED_ARRAY_SUPPORT = typedArraySupport();

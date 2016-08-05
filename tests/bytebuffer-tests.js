@@ -518,8 +518,7 @@ types.forEach(function(type) {
     bb.flip();
     var val = bb["read"+name]();
     if (output instanceof Long) {
-	console.log(val)
-	console.log(output);
+	assert(deepEqual(val, output));
     } else {
 	assert(val === output);
     }
@@ -532,8 +531,7 @@ types.forEach(function(type) {
 	bb.flip();
 	val = bb["read"+name]();
 	if (output instanceof Long) {
-	    console.log(val)
-	    console.log(output);
+	    assert(deepEqual(val, output));
 	} else {
 	    assert(val === output);
 	}
@@ -554,19 +552,16 @@ types.forEach(function(type) {
     val = bb["read"+name](1);
     if (output instanceof Long) {
 	if (!varint) {
-	    console.log(val)
-	    console.log(output)
+	    assert(deepEqual(val, output))
 	}
 	else {
-	    console.log(val)
-	    console.log({value: output, length: size})
+	    assert(deepEqual(val, {value: output, length: size}))
 	}
     } else {
 	if (!varint)
 	    assert(val === output);
 	else {
-	    console.log(val)
-	    console.log({value: output, length: size})
+	    assert(deepEqual(val, {value: output, length: size}))
 	}
     }
     // Alias
@@ -587,8 +582,7 @@ function run(data) {
     bb.reset();
     bb.writeBitSet(data);
     bb.reset();
-    console.log(bb.readBitSet())
-    console.log(data);
+    assert(deepEqual(bb.readBitSet(), data))
 };
 
 run([]);
@@ -604,8 +598,7 @@ run([true,false,true,false,true,false,true,false,true]);
 bb.reset();
 bb.writeBitSet([,null,"",0,42,"hello world",new Date(0),{},[]]);
 bb.reset();
-console.log(bb.readBitSet())
-console.log([false,false,false,false,true,true,true,true,true])
+assert(deepEqual(bb.readBitSet(), [false,false,false,false,true,true,true,true,true]))
 
 
 
@@ -709,8 +702,7 @@ assert(bb.offset === 6);
 assert(bb.limit === 2);
 bb.flip();
 assert(bb.toString("debug") === "<00 00 00 02 61 62>");
-console.log(bb.readIString(0))
-console.log({"string": "ab", "length": 6})
+assert(deepEqual(bb.readIString(0), {"string": "ab", "length": 6}))
 assert(bb.readIString() === "ab");
 bb.reset();
 assert(bb.toString("debug") === "<00 00 00 02 61 62>");
@@ -729,8 +721,7 @@ assert(bb.offset === 3);
 assert(bb.limit === 2);
 bb.flip();
 assert(bb.toString("debug").substr(0, 10) === "<02 61 62>");
-console.log(bb.readVString(0))
-console.log({"string": "ab", "length": 3})
+assert(deepEqual(bb.readVString(0), {"string": "ab", "length": 3}))
 assert(bb.toString("debug").substr(0, 10) === "<02 61 62>");
 assert(bb.readVString() === "ab");
 assert(bb.toString("debug").substr(0, 9) === "02 61 62|");
@@ -752,8 +743,7 @@ assert(bb.offset === 3);
 assert(bb.limit === 2);
 bb.flip();
 assert(bb.toString("debug").substr(0, 10) === "<61 62 00>");
-console.log(bb.readCString(0))
-console.log({"string": "ab", "length": 3})
+assert(deepEqual(bb.readCString(0), {"string": "ab", "length": 3}))
 assert(bb.toString("debug").substr(0, 10) === "<61 62 00>");
 assert(bb.readCString() === "ab");
 assert(bb.toString("debug").substr(0, 9) === "61 62 00|");
@@ -910,4 +900,4 @@ assert(callMe.called);
 
 
 
-alert('bytebuffer-tests.js\n\nAutomatic tests completed.\n\nMake sure to double-check the console.log. Every item that appears there should appear in pairs. This was a quick hack for me to avoid finding the deepEquals comparison function.\n\nThere are several lines in the code that should be uncommented to confirm errors are thrown when they should be. Again, a hack.')
+alert('bytebuffer-tests.js\n\nAutomatic tests completed.\n\nThere are several manual tests in the code that should be uncommented to confirm errors are thrown when they should be.')

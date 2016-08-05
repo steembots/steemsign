@@ -273,27 +273,22 @@ var text = '\uD842\uDFB7' + '\uD93D\uDCAD' + '\uDBFF\uDFFF'
 var buf = new Buffer(text)
 assert(text === buf.toString())
 
-console.log('Each of the next tests should display two outputs to console.log. Both outputs should be identical.')
-
 // replace orphaned utf16 surrogate lead code point
 var text = '\uD83D\uDE38' + '\uD83D' + '\uD83D\uDC4D'
 var buf = new Buffer(text)
-console.log(buf)
-console.log(new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0xef, 0xbf, 0xbd, 0xf0, 0x9f, 0x91, 0x8d ]))
+assert(deepEqual(buf, new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0xef, 0xbf, 0xbd, 0xf0, 0x9f, 0x91, 0x8d ])))
 
 // replace orphaned utf16 surrogate trail code point
 var text = '\uD83D\uDE38' + '\uDCAD' + '\uD83D\uDC4D'
 var buf = new Buffer(text)
-console.log(buf)
-console.log(new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0xef, 0xbf, 0xbd, 0xf0, 0x9f, 0x91, 0x8d ]))
+assert(deepEqual(buf, new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0xef, 0xbf, 0xbd, 0xf0, 0x9f, 0x91, 0x8d ])))
 
 // do not write partial utf16 code units
 var f = new Buffer([0, 0, 0, 0, 0])
 assert(f.length === 5)
 var size = f.write('あいうえお', 'utf16le')
 assert(size === 4)
-console.log(f)
-console.log(new Buffer([0x42, 0x30, 0x44, 0x30, 0x00]))
+assert(deepEqual(f, new Buffer([0x42, 0x30, 0x44, 0x30, 0x00])))
 
 // handle partial utf16 code points when encoding to utf8 the way node does
 var text = '\uD83D\uDE38' + '\uD83D\uDC4D'
@@ -301,50 +296,42 @@ var text = '\uD83D\uDE38' + '\uD83D\uDC4D'
 var buf = new Buffer(8)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0xf0, 0x9f, 0x91, 0x8d ]))
+assert(deepEqual(buf, new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0xf0, 0x9f, 0x91, 0x8d ])))
 
 buf = new Buffer(7)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0x00, 0x00, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0x00, 0x00, 0x00 ])))
 
 buf = new Buffer(6)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0x00, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0x00, 0x00 ])))
 
 buf = new Buffer(5)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0xf0, 0x9f, 0x98, 0xb8, 0x00 ])))
 
 buf = new Buffer(4)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0xf0, 0x9f, 0x98, 0xb8 ]))
+assert(deepEqual(buf, new Buffer([ 0xf0, 0x9f, 0x98, 0xb8 ])))
 
 buf = new Buffer(3)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x00, 0x00, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0x00, 0x00, 0x00 ])))
 
 buf = new Buffer(2)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x00, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0x00, 0x00 ])))
 
 buf = new Buffer(1)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0x00 ])))
 
 // handle invalid utf16 code points when encoding to utf8 the way node does
 var text = 'a' + '\uDE38\uD83D' + 'b'
@@ -352,58 +339,49 @@ var text = 'a' + '\uDE38\uD83D' + 'b'
 var buf = new Buffer(8)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x61, 0xef, 0xbf, 0xbd, 0xef, 0xbf, 0xbd, 0x62 ]))
+assert(deepEqual(buf, new Buffer([ 0x61, 0xef, 0xbf, 0xbd, 0xef, 0xbf, 0xbd, 0x62 ])))
 
 buf = new Buffer(7)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x61, 0xef, 0xbf, 0xbd, 0xef, 0xbf, 0xbd ]))
+assert(deepEqual(buf, new Buffer([ 0x61, 0xef, 0xbf, 0xbd, 0xef, 0xbf, 0xbd ])))
 
 buf = new Buffer(6)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x61, 0xef, 0xbf, 0xbd, 0x00, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0x61, 0xef, 0xbf, 0xbd, 0x00, 0x00 ])))
 
 buf = new Buffer(5)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x61, 0xef, 0xbf, 0xbd, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0x61, 0xef, 0xbf, 0xbd, 0x00 ])))
 
 buf = new Buffer(4)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x61, 0xef, 0xbf, 0xbd ]))
+assert(deepEqual(buf, new Buffer([ 0x61, 0xef, 0xbf, 0xbd ])))
 
 buf = new Buffer(3)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x61, 0x00, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0x61, 0x00, 0x00 ])))
 
 buf = new Buffer(2)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x61, 0x00 ]))
+assert(deepEqual(buf, new Buffer([ 0x61, 0x00 ])))
 
 buf = new Buffer(1)
 buf.fill(0)
 buf.write(text)
-console.log(buf)
-console.log(new Buffer([ 0x61 ]))
+assert(deepEqual(buf, new Buffer([ 0x61 ])))
 
 
 
 // ############################## METHODS TESTS ##################################
 // buffer.toJSON
 var data = [1, 2, 3, 4]
-console.log(new Buffer(data).toJSON())
-console.log({ type: 'Buffer', data: [ 1, 2, 3, 4 ] })
+assert(deepEqual(new Buffer(data).toJSON(), { type: 'Buffer', data: [ 1, 2, 3, 4 ] }))
 
 // buffer.copy
 // copied from nodejs.org example
@@ -437,8 +415,7 @@ var flatLong = Buffer.concat(long)
 var flatLongLen = Buffer.concat(long, 40)
 assert(flatZero.length === 0)
 assert(flatOne.toString() === 'asdf')
-console.log(flatOne)
-console.log(one[0])
+assert(deepEqual(flatOne, one[0]))
 assert(flatLong.toString() === (new Array(10 + 1).join('asdf')))
 assert(flatLongLen.toString() === (new Array(10 + 1).join('asdf')))
 
@@ -470,8 +447,7 @@ for (var i = 0; i < 200; i++) {
 }
 source.slice(2).copy(dest)
 source.copy(expected, 0, 2)
-console.log(dest)
-console.log(expected)
+assert(deepEqual(dest, expected))
 
 // copy() ascending
 var b = new Buffer('abcdefghij')
@@ -734,4 +710,4 @@ assert(buf.writeFloatBE(-4e40, 0) === 4)
 assert(buf.readFloatBE(0) === -Infinity)
 
 
-alert('nodebuffer-tests.js:\n\nAutomatic tests completed.\n\nDouble check in the console.log that every output is duplicated. I did not add an implementation for deepEqual assertion testing, so instead I just console.log both for comparison and check that they\'re the same in the log.\n\nThere are some manual tests that require uncommenting lines to confirm that the code throws errors when it should.')
+alert('nodebuffer-tests.js:\n\nAutomatic tests completed.\n\nThere are some manual tests that require uncommenting lines to confirm that the code throws errors when it should.')

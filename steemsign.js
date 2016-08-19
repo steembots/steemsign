@@ -1,68 +1,10 @@
-function normalize_brainKey(brainKey) {
-  	if (!(typeof brainKey === 'string')) {
-		throw new Error("string required for brainKey");
-	}
-
-	brainKey = brainKey.trim();
-    return brainKey.split(/[\t\n\v\f\r ]+/).join(' ');
-}
-
-function fromSeed(seed) {
-	return normalize_brainKey(Sha256.hash(seed));
+function getHeadBlockDate() {
+    return timeStringToDate( head_block_time_string )
 }
 
 function generateKey(accountName, password, role) {
     seed = accountName + role + password;
-    return fromSeed(seed);
-}
-
-function fromWif(_private_wif) {        
-    var private_wif = bs58decode(_private_wif);
-    var private_key = private_wif.slice(0, -4);
-    private_key = private_key.slice(1);
-    var h = '';
-    for (var i = 0; i < private_key.length; i++) {
-        h += private_key[i].toString(16);
-    }
-    return h;
-}
-
-function bs58decode(string) {
-	var ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-	var ALPHABET_MAP = {}
-	var BASE = ALPHABET.length
-	var LEADER = ALPHABET.charAt(0)
-
-	// pre-compute lookup table
-	for (var i = 0; i < ALPHABET.length; i++) {
-	    ALPHABET_MAP[ALPHABET.charAt(i)] = i
-	}
-
-    if (string.length === 0) return []
-
-    var bytes = [0]
-    for (var i = 0; i < string.length; i++) {
-      var value = ALPHABET_MAP[string[i]]
-      if (value === undefined) throw new Error('Non-base' + BASE + ' character')
-
-      for (var j = 0, carry = value; j < bytes.length; ++j) {
-        carry += bytes[j] * BASE
-        bytes[j] = carry & 0xff
-        carry >>= 8
-      }
-
-      while (carry > 0) {
-        bytes.push(carry & 0xff)
-        carry >>= 8
-      }
-    }
-
-    // deal with leading zeros
-    for (var k = 0; string[k] === LEADER && k < string.length - 1; ++k) {
-      bytes.push(0)
-    }
-
-    return bytes.reverse()
+    return PrivateKey.fromSeed(seed);
 }
 
 function base_expiration_sec(time_string) {
@@ -84,22 +26,46 @@ function timeStringToDate(time_string) {
 }
 
 function sign(steem){
-	console.log('test');
-	chain_id = "0000000000000000000000000000000000000000000000000000000000000000";
-	steem.send('get_dynamic_global_properties',[], function(r) {
-		var tx = {};
+    chain_id = "0000000000000000000000000000000000000000000000000000000000000000";
+    steem.send('get_dynamic_global_properties',[], function(r) {
+	var username = 'xeroc';
+	var password = '5465406540654065dfgasg';
+	var postingKey = generateKey(username, password, 'posting');
+
+	var tx = {};
         head_block_time_string = r.time;
         tx.expiration = base_expiration_sec(head_block_time_string) + 15;
+	tx.extensions = [];
+        tx.operations = [['vote',
+			  {'author': 'piston',
+			   'permlink': 'xeroc',
+			   'voter': username,
+			   'weight': 10000}]];
         tx.ref_block_num = r.head_block_number & 0xFFFF;
-        tx.ref_block_prefix = parseInt(r.head_block_id.substring(14,16)+r.head_block_id.substring(12,14)+r.head_block_id.substring(10,12)+r.head_block_id.substring(8,10),16);
-        tx.operations = [['transfer',{'from':'tester1','to':'tester2','amount':'0.000 STEEM','memo':'memo'}]];
-        var b = new ByteBuffer(ByteBuffer.DEFAULT_CAPACITY, ByteBuffer.LITTLE_ENDIAN);
-        b.append(tx);
-        console.log(b);
-        tx.tr_buffer = this.toByteBuffer(tx).toBinary();
+        tx.ref_block_prefix = new Buffer(r.head_block_id, 'hex').readUInt32LE(4);
+
+	console.log(r.head_block_number & 0xFFFF)
+	console.log(new Buffer((r.head_block_number & 0xFFFF).toString()).toString('hex'))
+
+	
+	var buf = new Buffer('123124ahgsidfasdjfksjfd0sdf98as0d98fsadfkjsdfkjsdlfkjsdffa');
+//	console.log(buf.toString('hex'))
+	var priv_key = PrivateKey.fromSeed('1981951951');
+//	console.log(Signature.signBuffer(buf, priv_key).i.toString(16));
+	
+	
+	var b = new ByteBuffer(ByteBuffer.DEFAULT_CAPACITY, ByteBuffer.LITTLE_ENDIAN);
+
+
+	
+
+//	console.log(tx)
+        //b.append(tx);
+	b.append(new ByteBuffer(tx));
+//        alert(b);
+//        tx.tr_buffer = this.toByteBuffer(tx).toBinary();
     });
-
-
+    /*~
     buf = Buffer.concat([new Buffer(chain_id, 'hex'), this.tr_buffer])
     var buf_sha256 = hash.sha256(buf);
     var der, e, ecsignature, i, lenR, lenS, nonce;
@@ -124,19 +90,13 @@ function sign(steem){
 	var sig = new Signature(ecsignature.r, ecsignature.s, i);
     this.signatures.push(sig.toBuffer());
     this.signer_private_keys = [];
-    this.signed = true;
+    this.signed = true;*/
     return;
 }
 
 var server = 'wss://this.piston.rocks';
 var ws = new WebSocketWrapper(server);
 ws.connect().then(function(response) {
-    var steem = new SteemWrapper(ws);  
-    var seed = 'test23';
-	var username = 'tester';
-	var password = 'test234';
-	sign(steem);
-	console.log(username+' active key: '+generateKey(username, password, 'active'));
-	console.log(fromSeed(seed));
-	console.log(fromWif('5JVhPmd2aos8LvvEB9vFaeSPFPVmST6jSkyNrzR5r9nK52F5so8'));
+    var steem = new SteemWrapper(ws);
+    sign(steem);
 });

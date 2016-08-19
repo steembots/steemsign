@@ -25,72 +25,92 @@ function timeStringToDate(time_string) {
     return new Date(time_string)
 }
 
+function asciiToHex(input) {
+    var hex_string = '';
+    for (var i = 0; i < input.length; ++i) {
+	hex_string += input.charCodeAt(i).toString(16);
+    }
+    return hex_string;
+}
+
+function reverseHex(input) {
+    var output = '';
+    for (var i = input.length-2; i >= 0; i-=2) {
+	output += input[i];
+	output += input[i+1];
+    }
+    return output;
+}
+
 function sign(steem){
     chain_id = "0000000000000000000000000000000000000000000000000000000000000000";
     steem.send('get_dynamic_global_properties',[], function(r) {
-	var username = 'xeroc';
-	var password = '5465406540654065dfgasg';
-	var postingKey = generateKey(username, password, 'posting');
-
+	var username = 'tester';
+	var password = 'testpw';
+	var privateKey = generateKey(username, password, 'posting');
+	var publicKey = privateKey.toPublicKey();
+	
+	var author = 'xeroc';
+	var permlink = 'piston';
+	var weight = '10000';
+	
 	var tx = {};
         head_block_time_string = r.time;
-        tx.expiration = base_expiration_sec(head_block_time_string) + 15;
+	var exp_in_seconds = base_expiration_sec(head_block_time_string) + 15
+	
+	tx.expiration = head_block_time_string;	
 	tx.extensions = [];
         tx.operations = [['vote',
-			  {'author': 'piston',
-			   'permlink': 'xeroc',
+			  {'author': author,
+			   'permlink': permlink,
 			   'voter': username,
-			   'weight': 10000}]];
+			   'weight': weight}]];
         tx.ref_block_num = r.head_block_number & 0xFFFF;
         tx.ref_block_prefix = new Buffer(r.head_block_id, 'hex').readUInt32LE(4);
-
-	console.log(r.head_block_number & 0xFFFF)
-	console.log(new Buffer((r.head_block_number & 0xFFFF).toString()).toString('hex'))
-
 	
-	var buf = new Buffer('123124ahgsidfasdjfksjfd0sdf98as0d98fsadfkjsdfkjsdlfkjsdffa');
-//	console.log(buf.toString('hex'))
-	var priv_key = PrivateKey.fromSeed('1981951951');
-//	console.log(Signature.signBuffer(buf, priv_key).i.toString(16));
+	var ref_block_num_str_BE = BigInteger('' + tx.ref_block_num).toString(16);
+	var ref_block_prefix_str_BE = BigInteger('' + tx.ref_block_prefix).toString(16);
+	var time_str_BE = BigInteger('' + exp_in_seconds).toString(16);
 	
-	
-	var b = new ByteBuffer(ByteBuffer.DEFAULT_CAPACITY, ByteBuffer.LITTLE_ENDIAN);
+	var tx_buf = reverseHex(ref_block_num_str_BE) +
+	    reverseHex(ref_block_prefix_str_BE) +
+	    reverseHex(time_str_BE);
+	tx_buf += '0100';
+	var voter_length = BigInteger('' + username.length).toString(16)
+	if (username.length <= 15) {
+	    tx_buf += '0';
+	}
+	tx_buf += voter_length;
+	tx_buf += asciiToHex(username);
+	var author_length = BigInteger('' + author.length).toString(16)
+	if (author.length <= 15) {
+	    tx_buf += '0';
+	}
+	tx_buf += author_length;
+	tx_buf += asciiToHex(author);
+	var permlink_length = BigInteger('' + permlink.length).toString(16)
+	if (permlink.length <= 15) {
+	    tx_buf += '0';
+	}
+	tx_buf += permlink_length;
+	tx_buf += asciiToHex(permlink);
+	tx_buf += reverseHex(BigInteger(weight).toString(16));
 
+	console.log('Serialized Transaction: ' + tx_buf)
 
-	
+	tx_buf = new Buffer(tx_buf, 'hex');
 
-//	console.log(tx)
-        //b.append(tx);
-	b.append(new ByteBuffer(tx));
-//        alert(b);
-//        tx.tr_buffer = this.toByteBuffer(tx).toBinary();
+	var sig = Signature.signBuffer(Buffer.concat([new Buffer(chain_id, 'hex'), tx_buf]),
+				       privateKey,
+				       publicKey
+				      );
+	tx.signatures = sig.toBuffer().toString('hex');
+
+	console.log('Private Key: ' + privateKey.toWif())
+	console.log('Public Key: ' + publicKey.toString())
+	console.log('Signature: ' + tx.signatures)
+	console.log('Signed Transaction: ' + tx);
     });
-    /*~
-    buf = Buffer.concat([new Buffer(chain_id, 'hex'), this.tr_buffer])
-    var buf_sha256 = hash.sha256(buf);
-    var der, e, ecsignature, i, lenR, lenS, nonce;
-    i = null;
-    nonce = 0;
-    e = BigInteger.fromBuffer(buf_sha256);
-    while (true) {
-      ecsignature = ecdsa.sign(secp256k1, buf_sha256, private_key.d, nonce++);
-      der = ecsignature.toDER();
-      lenR = der[3];
-      lenS = der[5 + lenR];
-      if (lenR === 32 && lenS === 32) {
-        i = ecdsa.calcPubKeyRecoveryParam(secp256k1, e, ecsignature, private_key.toPublicKey().Q);
-        i += 4;  // compressed
-        i += 27; // compact  //  24 or 27 :( forcing odd-y 2nd key candidate)
-        break;
-      }
-      if (nonce % 10 === 0) {
-        console.log("WARN: " + nonce + " attempts to find canonical signature");
-      }
-    }
-	var sig = new Signature(ecsignature.r, ecsignature.s, i);
-    this.signatures.push(sig.toBuffer());
-    this.signer_private_keys = [];
-    this.signed = true;*/
     return;
 }
 
